@@ -13,6 +13,24 @@ import tempfile
 import os
 import json
 import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
+
+
+def get_chinese_font():
+    """获取系统中可用的中文字体名称（跨平台）"""
+    # 优先级：Windows -> Microsoft YaHei/SimHei；Linux -> WenQuanYi/Noto；macOS -> STHeiti
+    font_candidates = [
+        'Microsoft YaHei', 'SimHei',           # Windows
+        'WenQuanYi Micro Hei', 'Noto Sans CJK SC', 'Noto Sans CJK TC',  # Linux
+        'STHeiti', 'Arial Unicode MS'          # macOS
+    ]
+    available = [f.name for f in fm.fontManager.ttflist]
+    for candidate in font_candidates:
+        if candidate in available:
+            return candidate
+    # 如果没有找到，返回默认字体（此时可能显示方框，但用户可接受）
+    return 'DejaVu Sans'
+
 # 查找支持中文的字体
 chinese_fonts = [f.name for f in fm.fontManager.ttflist if 'WenQuanYi' in f.name or 'Noto' in f.name or 'SimHei' in f.name]
 if chinese_fonts:
@@ -380,11 +398,18 @@ st.markdown("""
 <style>
     /* 主标题 */
     .main-header {
-        font-size: 2.5rem;
+        font-size: 2rem;
         font-weight: 600;
         color: #1E3A8A;
         text-align: center;
-        margin-bottom: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    /* 调整 metric 字体 */
+    div[data-testid="stMetric"] label {
+        font-size: 1.2rem !important;
+    }
+    div[data-testid="stMetric"] div {
+        font-size: 1.2rem !important;
     }
     /* 卡片效果 */
     .css-1r6slb0, .st-emotion-cache-1r6slb0 {
@@ -536,8 +561,17 @@ elif filter_method == "按行号范围":
 
 # 绘图函数
 def plot_custom_chart():
-    plt.rcParams['font.sans-serif'] = ['SimSun', 'SimHei', 'Microsoft YaHei']
+    # 跨平台中文字体支持
+    import platform
+    import matplotlib.pyplot as plt
+    if platform.system() == 'Windows':
+        plt.rcParams['font.sans-serif'] = ['Microsoft YaHei', 'SimHei']
+    elif platform.system() == 'Linux':
+        plt.rcParams['font.sans-serif'] = ['WenQuanYi Micro Hei', 'Noto Sans CJK SC']
+    else:  # macOS
+        plt.rcParams['font.sans-serif'] = ['STHeiti', 'Arial Unicode MS']
     plt.rcParams['axes.unicode_minus'] = False
+
     fig, ax = plt.subplots(figsize=(8, 5))
     colors = plt.cm.tab10(np.linspace(0, 1, len(selected_groups)))
     for idx, test_id in enumerate(selected_groups):
